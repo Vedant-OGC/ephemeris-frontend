@@ -6,12 +6,11 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-  ReferenceLine,
   Area,
   ComposedChart,
   Line,
 } from 'recharts';
-import { ChevronRight, ChevronLeft, Compass, Orbit, Sparkles, Activity } from 'lucide-react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 
 interface SatelliteInspectorProps {
   satellite: Satellite;
@@ -45,15 +44,13 @@ export const SatelliteInspector: React.FC<SatelliteInspectorProps> = ({
       ];
 
   return (
-    <div className="liquid-glass bg-[#060408]/95 border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-2xl relative overflow-hidden h-[460px] select-none">
+    <div className="liquid-glass bg-[#060408]/95 border border-white/20 hover:border-white/30 rounded-2xl p-6 flex flex-col justify-between shadow-2xl relative overflow-hidden h-[480px] md:h-[520px] select-none transition-all">
       {/* 1. Header with Live Status & Quick Switcher */}
       <div>
-        <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-          <div className="flex items-center space-x-2">
-            <span className="text-[10px] uppercase font-mono tracking-widest text-white/50 font-semibold">
-              TELEMETRY INSPECTOR
-            </span>
-          </div>
+        <div className="flex items-center justify-between border-b border-white/15 pb-3">
+          <span className="text-[10px] uppercase font-mono tracking-widest text-white/50 font-medium">
+            TELEMETRY INSPECTOR
+          </span>
 
           <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-1.5 text-xs font-mono text-[#6FF2C0] font-bold">
@@ -82,35 +79,35 @@ export const SatelliteInspector: React.FC<SatelliteInspectorProps> = ({
         </div>
 
         {/* 2. Satellite Title & Identity */}
-        <div className="flex items-start justify-between mt-3 mb-3">
+        <div className="flex items-start justify-between mt-4 mb-4">
           <div>
-            <h3 className="font-instrument text-2xl text-white text-glow">
+            <h3 className="font-instrument text-3xl text-white text-glow">
               {satellite.id}
             </h3>
-            <p className="text-[11px] font-mono text-white/60 mt-0.5">
+            <p className="text-xs font-mono text-white/60 mt-0.5">
               {satellite.name}
             </p>
           </div>
-          <div className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-emerald-950/60 text-[#6FF2C0] border border-emerald-500/30">
+          <div className="px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-emerald-950/60 text-[#6FF2C0] border border-emerald-500/40">
             {satellite.type} ORBIT
           </div>
         </div>
 
         {/* 3. Telemetry Parameter Badges */}
-        <div className="grid grid-cols-3 gap-2 text-left mb-3">
-          <div className="p-2 rounded-xl bg-black/40 border border-white/5 font-mono">
+        <div className="grid grid-cols-3 gap-2.5 text-left mb-4">
+          <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 font-mono">
             <div className="text-[9px] text-white/40 uppercase">ORBIT RESIDUAL</div>
             <div className="text-sm font-bold text-[#6FF2C0] mt-0.5">
               {satellite.currentOrbitResidual} m
             </div>
           </div>
-          <div className="p-2 rounded-xl bg-black/40 border border-white/5 font-mono">
+          <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 font-mono">
             <div className="text-[9px] text-white/40 uppercase">CLOCK BIAS</div>
             <div className="text-sm font-bold text-cyan-300 mt-0.5">
               {satellite.currentClockResidual} ns
             </div>
           </div>
-          <div className="p-2 rounded-xl bg-black/40 border border-white/5 font-mono">
+          <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 font-mono">
             <div className="text-[9px] text-white/40 uppercase">CONFIDENCE</div>
             <div className="text-sm font-bold text-white mt-0.5">
               {satellite.confidenceLevel}%
@@ -121,12 +118,12 @@ export const SatelliteInspector: React.FC<SatelliteInspectorProps> = ({
 
       {/* 4. Forecast Propagation Recharts Horizon */}
       <div className="flex-1 flex flex-col justify-end">
-        <div className="flex items-center justify-between text-[10px] font-mono text-white/40 mb-1">
+        <div className="flex items-center justify-between text-[10px] font-mono text-white/40 mb-1.5">
           <span>24H INFERENCE PROPAGATION</span>
-          <span className="text-[#6FF2C0]">EPHEMERIS DEEP FORECAST</span>
+          <span className="text-[#6FF2C0]">EPHEMERIS TIMeR-XL</span>
         </div>
 
-        <div className="h-32 w-full">
+        <div className="h-40 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -182,8 +179,8 @@ export const SatelliteInspector: React.FC<SatelliteInspectorProps> = ({
       </div>
 
       {/* 5. Footer Quick Coordinates */}
-      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-white/50">
-        <div>ELEV: {satellite.elevationDeg}° • AZIM: {satellite.azimuthDeg}°</div>
+      <div className="pt-3 border-t border-white/15 flex items-center justify-between text-[11px] font-mono text-white/50">
+        <div>ELEV: {satellite.elevationDeg}° &bull; AZIM: {satellite.azimuthDeg}°</div>
         <div className="text-emerald-400">SNR: {satellite.snrDbHz} dB-Hz</div>
       </div>
     </div>

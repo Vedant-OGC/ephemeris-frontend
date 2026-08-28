@@ -1,5 +1,5 @@
 import React from 'react';
-import { Radio, Activity, Orbit, Clock, Calendar, CheckCircle2, ShieldCheck, Compass, Sparkles } from 'lucide-react';
+import { Orbit, Activity, Compass, Clock, Calendar, ShieldCheck } from 'lucide-react';
 import { SystemTelemetry } from '../types';
 
 interface MetricCardsProps {
@@ -14,17 +14,17 @@ export const MetricCards: React.FC<MetricCardsProps> = ({
   lastPredictionDate,
 }) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 select-none">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 select-none">
       {/* 1. NAVIC SATELLITES */}
-      <div className="liquid-glass bg-[#060408]/90 border border-white/10 rounded-2xl p-4 flex items-start justify-between relative overflow-hidden group hover:border-emerald-500/40 transition-all shadow-xl">
-        <div className="space-y-1">
-          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50">
+      <div className="liquid-glass bg-[#060408]/90 border border-white/20 hover:border-emerald-500/50 rounded-2xl p-5 flex items-start justify-between relative overflow-hidden group transition-all shadow-xl">
+        <div className="space-y-1.5">
+          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50 font-medium">
             NAVIC FLEET
           </div>
           <div className="text-2xl font-bold font-mono text-white tracking-tight">
             {telemetry.totalSatellites} <span className="text-xs font-normal text-white/40">SATS</span>
           </div>
-          <div className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+          <div className="text-[10px] text-emerald-400 font-mono flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
             <span>3 GEO + 5 GSO</span>
           </div>
@@ -35,9 +35,9 @@ export const MetricCards: React.FC<MetricCardsProps> = ({
       </div>
 
       {/* 2. ACTIVE INFERENCES */}
-      <div className="liquid-glass bg-[#060408]/90 border border-white/10 rounded-2xl p-4 flex items-start justify-between relative overflow-hidden group hover:border-cyan-500/40 transition-all shadow-xl">
-        <div className="space-y-1">
-          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50">
+      <div className="liquid-glass bg-[#060408]/90 border border-white/20 hover:border-cyan-500/50 rounded-2xl p-5 flex items-start justify-between relative overflow-hidden group transition-all shadow-xl">
+        <div className="space-y-1.5">
+          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50 font-medium">
             24H INFERENCES
           </div>
           <div className="text-2xl font-bold font-mono text-cyan-300 tracking-tight">
@@ -53,9 +53,9 @@ export const MetricCards: React.FC<MetricCardsProps> = ({
       </div>
 
       {/* 3. RADIAL ORBIT ERROR */}
-      <div className="liquid-glass bg-[#060408]/90 border border-white/10 rounded-2xl p-4 flex items-start justify-between relative overflow-hidden group hover:border-emerald-500/40 transition-all shadow-xl">
-        <div className="space-y-1">
-          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50">
+      <div className="liquid-glass bg-[#060408]/90 border border-white/20 hover:border-emerald-500/50 rounded-2xl p-5 flex items-start justify-between relative overflow-hidden group transition-all shadow-xl">
+        <div className="space-y-1.5">
+          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50 font-medium">
             RADIAL RMSE
           </div>
           <div className="text-2xl font-bold font-mono text-[#6FF2C0] tracking-tight flex items-baseline space-x-1">
@@ -72,9 +72,9 @@ export const MetricCards: React.FC<MetricCardsProps> = ({
       </div>
 
       {/* 4. ATOMIC CLOCK ERROR */}
-      <div className="liquid-glass bg-[#060408]/90 border border-white/10 rounded-2xl p-4 flex items-start justify-between relative overflow-hidden group hover:border-cyan-500/40 transition-all shadow-xl">
-        <div className="space-y-1">
-          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50">
+      <div className="liquid-glass bg-[#060408]/90 border border-white/20 hover:border-cyan-500/50 rounded-2xl p-5 flex items-start justify-between relative overflow-hidden group transition-all shadow-xl">
+        <div className="space-y-1.5">
+          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50 font-medium">
             CLOCK BIAS RMSE
           </div>
           <div className="text-2xl font-bold font-mono text-cyan-300 tracking-tight flex items-baseline space-x-1">
@@ -91,9 +91,9 @@ export const MetricCards: React.FC<MetricCardsProps> = ({
       </div>
 
       {/* 5. LAST EPOCH INGEST */}
-      <div className="liquid-glass bg-[#060408]/90 border border-white/10 rounded-2xl p-4 flex items-start justify-between relative overflow-hidden group hover:border-white/30 transition-all shadow-xl">
-        <div className="space-y-1">
-          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50">
+      <div className="liquid-glass bg-[#060408]/90 border border-white/20 hover:border-white/40 rounded-2xl p-5 flex items-start justify-between relative overflow-hidden group transition-all shadow-xl">
+        <div className="space-y-1.5">
+          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50 font-medium">
             EPOCH HORIZON
           </div>
           <div className="text-xl font-bold font-mono text-white tracking-tight">
@@ -109,16 +109,15 @@ export const MetricCards: React.FC<MetricCardsProps> = ({
       </div>
 
       {/* 6. NORMALITY / VALIDATION */}
-      <div className="liquid-glass bg-[#060408]/90 border border-white/10 rounded-2xl p-4 flex items-start justify-between relative overflow-hidden group hover:border-emerald-500/40 transition-all shadow-xl">
-        <div className="space-y-1">
-          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50">
+      <div className="liquid-glass bg-[#060408]/90 border border-white/20 hover:border-emerald-500/50 rounded-2xl p-5 flex items-start justify-between relative overflow-hidden group transition-all shadow-xl">
+        <div className="space-y-1.5">
+          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50 font-medium">
             VALIDATION NORM
           </div>
           <div className="text-2xl font-bold font-mono text-[#6FF2C0] tracking-tight">
             p &gt; 0.05
           </div>
           <div className="text-[10px] text-emerald-400/80 font-mono flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3 text-[#6FF2C0]" />
             <span>Gaussian Zero-Mean</span>
           </div>
         </div>
