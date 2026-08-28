@@ -1,6 +1,0 @@
-{
-  "name": "GNSS Forecast",
-  "description": "Predictive Residual Error Spatio-Temporal Orchestrator (PRESTO) GNSS analytics dashboard featuring real-time satellite constellation tracking, orbit and clock residual forecasting, interactive 3D time-series visualization, and telemetry monitoring.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
