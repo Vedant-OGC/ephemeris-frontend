@@ -3,9 +3,10 @@ import { Volume2, VolumeX, Sparkles, ArrowDown } from 'lucide-react';
 
 interface HeroProps {
   onExplore?: () => void;
+  onOpenDashboard?: () => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ onExplore }) => {
+export const Hero: React.FC<HeroProps> = ({ onExplore, onOpenDashboard }) => {
   const [isPlayingSound, setIsPlayingSound] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscillatorNodes = useRef<{ osc1: OscillatorNode; osc2: OscillatorNode; gain: GainNode } | null>(null);
@@ -119,13 +120,29 @@ export const Hero: React.FC<HeroProps> = ({ onExplore }) => {
           A deep transfer learning framework to forecast NavIC satellite ephemeris & clock errors under extreme data scarcity (7 days / 145 observations).
         </p>
 
-        {/* Hero CTA Button */}
-        <button
-          onClick={handleScrollDown}
-          className="bg-white text-black px-8 py-3.5 rounded-full font-medium text-sm tracking-wide hover:bg-white/90 transition-all duration-300 button-glow mt-6 md:mt-9 active:scale-95 cursor-pointer shadow-lg hover:shadow-white/20"
-        >
-          Explore Framework
-        </button>
+        {/* Hero CTA Buttons */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 mt-6 md:mt-9">
+          <button
+            onClick={() => {
+              if (onOpenDashboard) {
+                onOpenDashboard();
+              } else {
+                window.location.pathname = '/dashboard';
+              }
+            }}
+            className="bg-white text-black px-8 py-3.5 rounded-full font-medium text-sm tracking-wide hover:bg-white/90 transition-all duration-300 button-glow active:scale-95 cursor-pointer shadow-lg hover:shadow-white/20 flex items-center gap-2 font-mono"
+          >
+            <span>Continue to Dashboard</span>
+            <span className="text-xs">&rarr;</span>
+          </button>
+
+          <button
+            onClick={handleScrollDown}
+            className="liquid-glass text-white px-7 py-3.5 rounded-full font-medium text-sm tracking-wide hover:bg-white/10 border border-white/20 transition-all duration-300 active:scale-95 cursor-pointer"
+          >
+            Explore Framework
+          </button>
+        </div>
       </div>
 
       {/* Sound Indicator (Desktop only) */}

@@ -1,7 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Quote } from 'lucide-react';
 
-export const QuoteSection: React.FC = () => {
+interface QuoteSectionProps {
+  onOpenDashboard?: () => void;
+}
+
+export const QuoteSection: React.FC<QuoteSectionProps> = ({ onOpenDashboard }) => {
   const sectionRef = useRef<HTMLElement | null>(null);
   const cloud1Ref = useRef<HTMLDivElement | null>(null);
   const cloud2Ref = useRef<HTMLDivElement | null>(null);
@@ -115,17 +119,23 @@ export const QuoteSection: React.FC = () => {
         {/* Action Button */}
         <div className="mt-10 md:mt-12 flex flex-wrap items-center justify-center gap-4">
           <button
+            onClick={() => {
+              if (onOpenDashboard) {
+                onOpenDashboard();
+              } else {
+                window.location.pathname = '/dashboard';
+              }
+            }}
+            className="bg-white text-black px-8 py-3.5 rounded-full font-medium text-sm tracking-wide hover:bg-white/90 transition-all duration-300 button-glow active:scale-95 shadow-xl font-mono cursor-pointer"
+          >
+            Launch Mission Dashboard &rarr;
+          </button>
+          <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="bg-white text-black px-8 py-3.5 rounded-full font-medium text-sm tracking-wide hover:bg-white/90 transition-all duration-300 button-glow active:scale-95 shadow-xl"
+            className="px-8 py-3.5 rounded-full font-medium text-sm tracking-wide text-white border border-white/30 hover:bg-white/10 transition-all duration-300 backdrop-blur-sm cursor-pointer"
           >
             Back to Top
           </button>
-          <a
-            href="#signal"
-            className="px-8 py-3.5 rounded-full font-medium text-sm tracking-wide text-white border border-white/30 hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"
-          >
-            Review Telemetry
-          </a>
         </div>
       </div>
 

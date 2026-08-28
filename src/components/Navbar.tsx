@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { LayoutDashboard } from 'lucide-react';
 
 interface NavbarProps {
   onNavigate?: (sectionId: string) => void;
+  onOpenDashboard?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onOpenDashboard }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -35,11 +37,20 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
     }
   };
 
+  const handleDashboardClick = () => {
+    setIsOpen(false);
+    if (onOpenDashboard) {
+      onOpenDashboard();
+    } else {
+      window.location.pathname = '/dashboard';
+    }
+  };
+
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-6 md:px-12 py-5 flex items-center justify-between ${
         scrolled
-          ? 'bg-[#0a0608]/80 backdrop-blur-md border-b border-white/10 shadow-2xl'
+          ? 'bg-[#0a0608]/85 backdrop-blur-md border-b border-white/10 shadow-2xl'
           : 'bg-transparent'
       }`}
     >
@@ -71,13 +82,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
         ))}
       </div>
 
-      {/* Right Desktop CTA */}
+      {/* Right Desktop CTA - Launch Dashboard Button */}
       <div className="hidden md:flex items-center gap-4">
         <button
-          onClick={() => handleLinkClick('#signal')}
-          className="bg-white text-black px-8 py-3.5 rounded-full font-medium text-sm tracking-wide hover:bg-white/90 transition-all duration-300 button-glow active:scale-95 cursor-pointer"
+          onClick={handleDashboardClick}
+          className="bg-white text-black px-7 py-3 rounded-full font-mono font-semibold text-xs tracking-wider hover:bg-white/90 transition-all duration-300 button-glow active:scale-95 cursor-pointer flex items-center gap-2"
         >
-          Explore Telemetry
+          <LayoutDashboard className="w-3.5 h-3.5" />
+          <span>Dashboard</span>
         </button>
       </div>
 
@@ -162,13 +174,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
           className="transition-all duration-300 pt-6 border-t border-white/10"
         >
           <button
-            onClick={() => handleLinkClick('#signal')}
-            className="w-full bg-white text-black px-6 py-3.5 rounded-full font-medium text-sm tracking-wide hover:bg-white/90 transition-all duration-300 button-glow text-center"
+            onClick={handleDashboardClick}
+            className="w-full bg-white text-black px-6 py-3.5 rounded-full font-mono font-semibold text-xs tracking-wider hover:bg-white/90 transition-all duration-300 button-glow text-center flex items-center justify-center gap-2 cursor-pointer"
           >
-            Explore Telemetry
+            <LayoutDashboard className="w-4 h-4" />
+            <span>Launch Dashboard</span>
           </button>
           <div className="mt-4 text-center text-xs font-mono text-white/40">
-            EPHEMERIS v2.4 — NavIC
+            EPHEMERIS &bull; NavIC Deep Engine
           </div>
         </div>
       </div>
