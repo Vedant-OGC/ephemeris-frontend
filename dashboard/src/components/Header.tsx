@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Bell, Play, Pause, Radio, Shield, HelpCircle, X, ChevronDown } from 'lucide-react';
+import { Bell, Play, Pause, Radio, Shield, HelpCircle, X, ChevronDown, Menu } from 'lucide-react';
 import { AlertItem, DashboardTab } from '../types';
 
 interface HeaderProps {
   activeTab: DashboardTab;
   onSelectTab: (tab: DashboardTab) => void;
+  onToggleSidebar?: () => void;
   utcTime: Date;
   isSimulating: boolean;
   onToggleSimulation: () => void;
@@ -17,6 +18,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onSelectTab,
+  onToggleSidebar,
   utcTime,
   isSimulating,
   onToggleSimulation,
@@ -48,9 +50,19 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    <header className="h-16 bg-[#050608]/85 border-b border-white/10 px-4 md:px-8 flex items-center justify-between z-30 sticky top-0 backdrop-blur-md select-none">
-      {/* Left: Brand Identity */}
-      <div className="flex items-center space-x-6">
+    <header className="h-16 bg-[#050608]/90 border-b border-white/20 px-4 md:px-8 flex items-center justify-between z-30 sticky top-0 backdrop-blur-xl select-none">
+      {/* Left: Brand Identity & Sidebar Toggle */}
+      <div className="flex items-center space-x-4 md:space-x-6">
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/20 transition-colors cursor-pointer"
+            title="Toggle navigation sidebar"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+        )}
+
         <div
           className="flex items-center space-x-2.5 cursor-pointer"
           onClick={() => onSelectTab('dashboard')}
@@ -58,7 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="font-dancing text-white text-2xl font-semibold tracking-wide">
             Ephemeris
           </span>
-          <span className="text-[10px] font-mono tracking-widest text-[#6FF2C0] uppercase px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-500/30">
+          <span className="text-[10px] font-mono tracking-widest text-[#6FF2C0] uppercase px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-500/40">
             NavIC
           </span>
         </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertItem, DashboardTab } from '../types';
-import { AlertTriangle, CheckCircle2, Activity, ArrowUp, Zap, Bell } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ArrowUp, Zap, Bell } from 'lucide-react';
 
 interface AlertsWidgetProps {
   alerts: AlertItem[];
@@ -43,42 +43,42 @@ export const AlertsWidget: React.FC<AlertsWidgetProps> = ({
   };
 
   return (
-    <div className="liquid-glass bg-[#060408]/95 border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-xl h-[280px] select-none">
+    <div className="liquid-glass bg-[#060408]/95 border border-white/20 hover:border-white/30 rounded-2xl p-6 flex flex-col justify-between shadow-2xl h-[320px] select-none transition-all">
       <div>
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
-          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50 font-semibold flex items-center gap-1.5">
-            <Bell className="w-3.5 h-3.5 text-amber-400" />
-            <span>TELEMETRY ALERTS & TRIGGERS</span>
+        <div className="flex items-center justify-between border-b border-white/15 pb-3 mb-3">
+          <div className="text-[10px] uppercase font-mono tracking-widest text-white/50 font-medium flex items-center gap-2">
+            <Bell className="w-4 h-4 text-amber-400" />
+            <span>TELEMETRY ALERTS &amp; TRIGGERS</span>
           </div>
           <button
             onClick={() => onNavigateTab('alerts')}
-            className="text-[10px] font-mono text-[#6FF2C0] hover:text-emerald-300 hover:underline transition-colors cursor-pointer"
+            className="text-xs font-mono text-[#6FF2C0] hover:text-emerald-300 hover:underline transition-colors cursor-pointer"
           >
-            All Alerts →
+            All Alerts &rarr;
           </button>
         </div>
 
         {/* Alert Items List */}
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {alerts.slice(0, 4).map((alert) => (
             <div
               key={alert.id}
               onClick={() => onSelectAlert(alert)}
-              className="flex items-start justify-between p-1.5 rounded-xl hover:bg-white/[0.04] cursor-pointer transition-colors group"
+              className="flex items-start justify-between p-2 rounded-xl hover:bg-white/[0.04] cursor-pointer transition-colors group"
             >
-              <div className="flex items-start space-x-2.5 pr-2">
+              <div className="flex items-start space-x-3 pr-2">
                 {getAlertIcon(alert.type)}
                 <div className="min-w-0">
                   <div className="text-xs font-mono font-medium text-white group-hover:text-[#6FF2C0] transition-colors truncate">
                     {alert.title}
                   </div>
-                  <div className="text-[10px] text-white/60 line-clamp-1 font-inter">
+                  <div className="text-[11px] text-white/60 line-clamp-1 font-inter mt-0.5">
                     {alert.description}
                   </div>
                 </div>
               </div>
-              <div className="text-[9px] font-mono text-white/40 shrink-0 whitespace-nowrap pt-0.5">
+              <div className="text-[10px] font-mono text-white/40 shrink-0 whitespace-nowrap pt-0.5">
                 {alert.timestamp}
               </div>
             </div>
@@ -87,14 +87,14 @@ export const AlertsWidget: React.FC<AlertsWidgetProps> = ({
       </div>
 
       {/* Footer Quick Status Indicator */}
-      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-white/40">
+      <div className="pt-3 border-t border-white/15 flex items-center justify-between text-xs font-mono text-white/40">
         <span className="flex items-center space-x-1.5 text-[#6FF2C0]">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span>EPHEMERIS Autonomous Rules Active</span>
+          <span>EPHEMERIS Rules Active</span>
         </span>
         <button
           onClick={() => onNavigateTab('alerts')}
-          className="text-white/40 hover:text-white transition-colors cursor-pointer"
+          className="text-white/50 hover:text-white transition-colors cursor-pointer"
         >
           Configure
         </button>
