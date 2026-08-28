@@ -23,21 +23,25 @@ body {
 }
 
 .liquid-glass {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.025);
   background-blend-mode: luminosity;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 10px 30px -10px rgba(0, 0, 0, 0.6);
   position: relative;
 }
 
+.liquid-glass:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
 .liquid-glass-emerald {
-  background: rgba(111, 242, 192, 0.025);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(111, 242, 192, 0.2);
-  box-shadow: inset 0 1px 1px rgba(111, 242, 192, 0.15), 0 0 20px rgba(111, 242, 192, 0.05);
+  background: rgba(111, 242, 192, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(111, 242, 192, 0.3);
+  box-shadow: inset 0 1px 1px rgba(111, 242, 192, 0.2), 0 0 25px rgba(111, 242, 192, 0.08);
 }
 
 .text-glow {

@@ -39,6 +39,7 @@ import {
 export default function App() {
   // Navigation
   const [activeTab, setActiveTab] = useState<DashboardTab>('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false); // Hide by default
 
   // Core Data States
   const [satellites, setSatellites] = useState<Satellite[]>(INITIAL_SATELLITES);
@@ -142,6 +143,7 @@ export default function App() {
       <Header
         activeTab={activeTab}
         onSelectTab={(tab) => setActiveTab(tab)}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         utcTime={utcTime}
         isSimulating={isSimulating}
         onToggleSimulation={() => setIsSimulating(!isSimulating)}
@@ -151,17 +153,19 @@ export default function App() {
         onSelectAlert={handleSelectAlert}
       />
 
-      {/* Main Layout Area: Sidebar + Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Navigation Sidebar */}
+      {/* Main Layout Area: Togglable Sidebar Drawer + Main Content */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Left Navigation Sidebar Drawer (Hidden by default) */}
         <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
           activeTab={activeTab}
           onSelectTab={(tab) => setActiveTab(tab)}
           unreadAlertCount={unreadAlertCount}
         />
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 technical-grid bg-[#060407]/80">
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 technical-grid bg-[#060407]/80">
           {/* TAB 1: Mission Control Overview */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
