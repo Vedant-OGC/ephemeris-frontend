@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { MetricCards } from './components/MetricCards';
@@ -19,131 +19,64 @@ import { AlertsView } from './components/views/AlertsView';
 import { SettingsView } from './components/views/SettingsView';
 import { HealthView } from './components/views/HealthView';
 
-// Initial Mock Data
-import {
-  INITIAL_SATELLITES,
-  INITIAL_FORECASTS,
-  INITIAL_ALERTS,
-  INITIAL_SYSTEM_TELEMETRY,
-} from './data/initialData';
+// Data hook & adapters
+import { useDashboardData } from './hooks/useDashboardData';
+import { RESIDUAL_SAT_CONFIGS, mapResidualsToChartData } from './api/adapters';
 
-import {
-  Satellite,
-  ForecastLog,
-  AlertItem,
-  SystemTelemetry,
-  SatelliteHealth,
-  DashboardTab,
-} from './types';
+import { DashboardTab } from './types';
 
 interface DashboardProps {
   onBackToLanding?: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
-  // Navigation
-  const [activeTab, setActiveTab] = useState<DashboardTab>('dashboard');
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false); // Hide by default
+  const data = useDashboardData();
+  const [activeTab, setActiveTab] = React.useState<DashboardTab>('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
-  // Core Data States
-  const [satellites, setSatellites] = useState<Satellite[]>(INITIAL_SATELLITES);
-  const [selectedSatelliteId, setSelectedSatelliteId] = useState<string>('NavIC-1A');
-  const [forecasts, setForecasts] = useState<ForecastLog[]>(INITIAL_FORECASTS);
-  const [alerts, setAlerts] = useState<AlertItem[]>(INITIAL_ALERTS);
-  const [telemetry, setTelemetry] = useState<SystemTelemetry>(INITIAL_SYSTEM_TELEMETRY);
-
-  // Live UTC Clock & Simulation Controls
-  const [utcTime, setUtcTime] = useState<Date>(new Date());
-  const [isSimulating, setIsSimulating] = useState<boolean>(true);
-  const [simulationSpeed, setSimulationSpeed] = useState<number>(1);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-
-  // Active satellite record
-  const selectedSatellite =
-    satellites.find((s) => s.id === selectedSatelliteId) || satellites[0];
-
-  // Live real-time clock ticker & subtle telemetry simulation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setUtcTime((prev) => new Date(prev.getTime() + 1000 * (isSimulating ? simulationSpeed : 0)));
-
-      if (isSimulating) {
-        setTelemetry((prev) => {
-          const jitterGpu = Math.min(65, Math.max(25, prev.gpuUsagePercent + (Math.random() > 0.5 ? 1 : -1)));
-          return {
-            ...prev,
-            uptimeSeconds: prev.uptimeSeconds + 1 * simulationSpeed,
-            gpuUsagePercent: jitterGpu,
-            avgOrbitError: +(0.14 + Math.sin(Date.now() / 10000) * 0.01).toFixed(2),
-            avgClockError: +(0.08 + Math.cos(Date.now() / 10000) * 0.005).toFixed(2),
-          };
-        });
-
-        setSatellites((prev) =>
-          prev.map((sat) => {
-            const jitter = (Math.random() - 0.5) * 0.004;
-            const updatedOrbit = Math.max(0.04, +(sat.currentOrbitResidual + jitter).toFixed(2));
-            return {
-              ...sat,
-              currentOrbitResidual: updatedOrbit,
-            };
-          })
-        );
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isSimulating, simulationSpeed]);
-
-  const handleRefreshData = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      const now = new Date();
-      const timeStr = `${String(now.getUTCHours()).padStart(2, '0')}:${String(
-        now.getUTCMinutes()
-      ).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')} UTC`;
-
-      setTelemetry((prev) => ({
-        ...prev,
-        lastUpdatedUtc: timeStr,
-        gpuUsagePercent: 38,
-      }));
-      setIsRefreshing(false);
-    }, 600);
-  };
-
-  const handleAddForecast = (newForecast: ForecastLog) => {
-    setForecasts((prev) => [newForecast, ...prev]);
-  };
-
-  const handleAcknowledgeAlert = (id: string) => {
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, read: true } : a))
-    );
-  };
-
-  const handleClearAllAlerts = () => {
-    setAlerts((prev) => prev.map((a) => ({ ...a, read: true })));
-  };
-
-  const handleSelectAlert = (alert: AlertItem) => {
-    if (alert.satelliteId) {
-      setSelectedSatelliteId(alert.satelliteId);
-      setActiveTab('dashboard');
-    }
-  };
-
-  const handleUpdateHealth = (id: string, health: SatelliteHealth) => {
-    setSatellites((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, health } : s))
-    );
-  };
+  const {
+    satellites,
+    selectedSatellite,
+    selectedSatelliteId,
+    setSelectedSatelliteId,
+    telemetry,
+    alerts,
+    forecasts,
+    dashboardOverview,
+    orbitResiduals,
+    isLoading,
+    utcTime,
+    isSimulating,
+    setIsSimulating,
+    simulationSpeed,
+    setSimulationSpeed,
+    isRefreshing,
+    refreshTelemetry,
+    addForecast,
+    acknowledgeAlert,
+    clearAllAlerts,
+    selectAlert,
+    updateHealth,
+  } = data;
 
   const unreadAlertCount = alerts.filter((a) => !a.read).length;
 
+  // Map residual data for charts
+  const residualChartData = orbitResiduals ? mapResidualsToChartData(orbitResiduals) : null;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#050608] text-white flex items-center justify-center font-inter">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-2 border-[#6FF2C0] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs font-mono text-white/60">CONNECTING TO EPHEMERIS BACKEND...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#050608] text-white flex flex-col font-inter selection:bg-emerald-500/30 selection:text-emerald-200">
-      {/* 1. Translucent Rectangular Minimal Navigation Bar */}
       <Header
         activeTab={activeTab}
         onSelectTab={(tab) => setActiveTab(tab)}
@@ -155,12 +88,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
         simulationSpeed={simulationSpeed}
         onChangeSpeed={(speed) => setSimulationSpeed(speed)}
         alerts={alerts}
-        onSelectAlert={handleSelectAlert}
+        onSelectAlert={selectAlert}
       />
 
-      {/* Main Layout Area: Togglable Sidebar Drawer + Main Content */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Left Navigation Sidebar Drawer (Hidden by default) */}
         <Sidebar
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
@@ -169,14 +100,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
           unreadAlertCount={unreadAlertCount}
         />
 
-        {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 technical-grid bg-[#060407]/80">
-          {/* TAB 1: Mission Control Overview */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-200">
-              {/* 1. TOP FEATURED: 3D NavIC Constellation Tracker & Satellite Inspector */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* 3D Earth Constellation Globe (Top Left: 8 cols) */}
                 <div className="lg:col-span-8">
                   <ConstellationGlobe
                     satellites={satellites}
@@ -185,33 +112,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
                     isSimulating={isSimulating}
                   />
                 </div>
-
-                {/* Selected Satellite Inspector (Top Right: 4 cols) */}
                 <div className="lg:col-span-4">
-                  <SatelliteInspector
-                    satellite={selectedSatellite}
-                    allSatellites={satellites}
-                    onSelectSatellite={(id) => setSelectedSatelliteId(id)}
-                  />
+                  {selectedSatellite && (
+                    <SatelliteInspector
+                      satellite={selectedSatellite}
+                      allSatellites={satellites}
+                      onSelectSatellite={(id) => setSelectedSatelliteId(id)}
+                    />
+                  )}
                 </div>
               </div>
 
-              {/* 2. Key Performance Indicators Strip */}
               <MetricCards
                 telemetry={telemetry}
-                lastPredictionTime="14:03 UTC"
-                lastPredictionDate="28 May 2025"
+                lastPredictionTime={dashboardOverview?.last_prediction_utc || 'N/A'}
+                lastPredictionDate={dashboardOverview?.utc_time || ''}
               />
 
-              {/* 3. FULL HORIZONTAL SECTION: Orbit Residual Telemetry Waveforms */}
               <div className="w-full">
                 <OrbitResidualAllChart
                   selectedSatelliteId={selectedSatelliteId}
                   onSelectSatellite={(id) => setSelectedSatelliteId(id)}
+                  chartData={residualChartData?.data || []}
+                  satConfigs={residualChartData?.satConfigs || RESIDUAL_SAT_CONFIGS}
                 />
               </div>
 
-              {/* 4. Secondary Operations Row: Recent Inferences & Trigger Alerts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <RecentForecastsTable
                   forecasts={forecasts}
@@ -221,74 +147,69 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
                 <AlertsWidget
                   alerts={alerts}
                   onNavigateTab={(tab) => setActiveTab(tab)}
-                  onSelectAlert={handleSelectAlert}
+                  onSelectAlert={selectAlert}
                 />
               </div>
             </div>
           )}
 
-          {/* TAB 2: 24H Neural Inference Playground */}
           {activeTab === 'forecast' && (
             <div className="max-w-[1600px] mx-auto">
               <ForecastView
                 satellites={satellites}
-                onAddForecast={handleAddForecast}
+                onAddForecast={addForecast}
               />
             </div>
           )}
 
-          {/* TAB 3: Constellation Fleet & Polar Sky Plot */}
           {activeTab === 'satellites' && (
             <div className="max-w-[1600px] mx-auto">
               <SatellitesView
                 satellites={satellites}
                 selectedSatelliteId={selectedSatelliteId}
                 onSelectSatellite={(id) => setSelectedSatelliteId(id)}
-                onUpdateHealth={handleUpdateHealth}
+                onUpdateHealth={updateHealth}
               />
             </div>
           )}
 
-          {/* TAB 4: Statistical Analytics & Error Decomposition */}
           {activeTab === 'analytics' && (
             <div className="max-w-[1600px] mx-auto">
-              <AnalyticsView satellites={satellites} />
+              <AnalyticsView
+                satellites={satellites}
+                residuals={orbitResiduals}
+              />
             </div>
           )}
 
-          {/* TAB 5: Telemetry Dataset Ingestion */}
           {activeTab === 'upload' && (
             <div className="max-w-[1600px] mx-auto">
               <UploadDatasetView />
             </div>
           )}
 
-          {/* TAB 6: Prediction History & Audit */}
           {activeTab === 'history' && (
             <div className="max-w-[1600px] mx-auto">
               <HistoryView forecasts={forecasts} />
             </div>
           )}
 
-          {/* TAB 7: Telemetry Alerts */}
           {activeTab === 'alerts' && (
             <div className="max-w-[1600px] mx-auto">
               <AlertsView
                 alerts={alerts}
-                onAcknowledgeAlert={handleAcknowledgeAlert}
-                onClearAll={handleClearAllAlerts}
+                onAcknowledgeAlert={acknowledgeAlert}
+                onClearAll={clearAllAlerts}
               />
             </div>
           )}
 
-          {/* TAB 8: Model Settings */}
           {activeTab === 'settings' && (
             <div className="max-w-[1600px] mx-auto">
               <SettingsView />
             </div>
           )}
 
-          {/* TAB 9: Infrastructure Health & Telemetry */}
           {activeTab === 'health' && (
             <div className="max-w-[1600px] mx-auto">
               <HealthView telemetry={telemetry} />
@@ -297,10 +218,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
         </main>
       </div>
 
-      {/* Bottom Sticky Infrastructure Telemetry Bar */}
       <SystemTelemetryBar
         telemetry={telemetry}
-        onRefreshData={handleRefreshData}
+        onRefreshData={refreshTelemetry}
         isRefreshing={isRefreshing}
       />
     </div>
@@ -308,4 +228,3 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
 };
 
 export default Dashboard;
-

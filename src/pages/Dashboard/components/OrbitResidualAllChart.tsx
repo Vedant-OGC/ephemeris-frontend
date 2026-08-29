@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -10,36 +10,30 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { Layers } from 'lucide-react';
-import { GENERATE_TIME_SERIES_DATA } from '../data/initialData';
+
+interface SatConfig {
+  id: string;
+  color: string;
+  name: string;
+}
 
 interface OrbitResidualAllChartProps {
   onSelectSatellite?: (id: string) => void;
   selectedSatelliteId?: string;
+  chartData: Record<string, string | number>[];
+  satConfigs: SatConfig[];
 }
 
 export const OrbitResidualAllChart: React.FC<OrbitResidualAllChartProps> = ({
   onSelectSatellite,
   selectedSatelliteId,
+  chartData,
+  satConfigs,
 }) => {
-  const [timeRange, setTimeRange] = useState<number>(24);
-
-  const satConfigs = [
-    { id: 'NavIC-1A', color: '#6FF2C0', name: 'NavIC-1A' },
-    { id: 'NavIC-1B', color: '#38BDF8', name: 'NavIC-1B' },
-    { id: 'NavIC-1C', color: '#6FF2C0', name: 'NavIC-1C' },
-    { id: 'NavIC-1D', color: '#FBBF24', name: 'NavIC-1D' },
-    { id: 'NavIC-1E', color: '#A78BFA', name: 'NavIC-1E' },
-    { id: 'NavIC-1F', color: '#F472B6', name: 'NavIC-1F' },
-    { id: 'NavIC-1G', color: '#38BDF8', name: 'NavIC-1G' },
-    { id: 'NavIC-1I', color: '#6FF2C0', name: 'NavIC-1I' },
-  ];
-
-  const data = useMemo(() => GENERATE_TIME_SERIES_DATA(timeRange), [timeRange]);
-
   return (
     <div className="liquid-glass bg-[#060408]/95 border border-white/10 rounded-2xl p-6 flex flex-col justify-between shadow-2xl w-full select-none">
       <div>
-        {/* Header with Time Range Selector & Chips */}
+        {/* Header with Satellite Chips */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4 mb-4">
           <div>
             <div className="text-[10px] uppercase font-mono tracking-widest text-[#6FF2C0] font-semibold flex items-center gap-2">
@@ -52,7 +46,6 @@ export const OrbitResidualAllChart: React.FC<OrbitResidualAllChartProps> = ({
           </div>
 
           <div className="flex items-center space-x-3">
-            {/* Satellite Chips */}
             <div className="hidden md:flex flex-wrap items-center gap-1.5 font-mono text-[10px]">
               {satConfigs.map((sat) => {
                 const isSelected = selectedSatelliteId === sat.id;
@@ -75,25 +68,13 @@ export const OrbitResidualAllChart: React.FC<OrbitResidualAllChartProps> = ({
                 );
               })}
             </div>
-
-            {/* Time Horizon Selector */}
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(Number(e.target.value))}
-              className="bg-black/60 border border-white/10 text-[#6FF2C0] text-xs font-mono rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer"
-            >
-              <option value={6}>6 Hours</option>
-              <option value={12}>12 Hours</option>
-              <option value={24}>24 Hours</option>
-              <option value={48}>48 Hours</option>
-            </select>
           </div>
         </div>
 
-        {/* Multi-line Recharts Chart - Full Horizontal Width */}
+        {/* Multi-line Recharts Chart */}
         <div className="h-64 sm:h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
+            <LineChart data={chartData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
               <XAxis
                 dataKey="time"
