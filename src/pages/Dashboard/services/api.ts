@@ -21,7 +21,8 @@ import {
 } from '../data/initialData';
 
 export const API_BASE_URL =
-  ((import.meta as any).env?.VITE_API_URL as string) || 'http://127.0.0.1:8000';
+  ((import.meta as any).env?.VITE_API_URL as string) ||
+  'https://ephemeris-backend-wghk.onrender.com';
 
 // Helper for safe JSON fetch with timeout
 async function safeFetch<T>(
