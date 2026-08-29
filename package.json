@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "backend": "python -m uvicorn api.main:app --host 127.0.0.1 --port 8000 --reload --app-dir backend"
   },
   "dependencies": {
     "clsx": "^2.1.1",

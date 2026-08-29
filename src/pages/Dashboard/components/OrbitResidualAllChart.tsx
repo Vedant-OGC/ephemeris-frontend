@@ -60,11 +60,10 @@ export const OrbitResidualAllChart: React.FC<OrbitResidualAllChartProps> = ({
                   <button
                     key={sat.id}
                     onClick={() => onSelectSatellite && onSelectSatellite(sat.id)}
-                    className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                      isSelected
+                    className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${isSelected
                         ? 'bg-white/15 text-white font-bold ring-1 ring-[#6FF2C0]'
                         : 'text-white/50 hover:text-white hover:bg-white/5 border border-white/5'
-                    }`}
+                      }`}
                   >
                     <span
                       className="w-2 h-2 rounded-full inline-block"

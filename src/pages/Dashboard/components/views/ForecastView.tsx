@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Satellite, ForecastLog } from '../../types';
-import { Play, Sparkles, Sliders, CheckCircle2, Clock, Activity, Download, Orbit, Cpu, Compass } from 'lucide-react';
+import { Play, Sparkles, Sliders, CheckCircle2, Clock, Activity, Download, Orbit, Cpu, Compass, Upload } from 'lucide-react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -13,6 +13,7 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
+import { uploadSatelliteForecastCSV, runForecastInference, API_BASE_URL } from '../../services/api';
 
 interface ForecastViewProps {
   satellites: Satellite[];
@@ -27,71 +28,84 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ satellites, onAddFor
   const [noiseLevel, setNoiseLevel] = useState<number>(0.04);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [forecastResult, setForecastResult] = useState<any | null>(null);
+  const [customFile, setCustomFile] = useState<File | null>(null);
 
   const currentSatellite = satellites.find((s) => s.id === selectedSat) || satellites[0];
 
-  const handleRunInference = () => {
+  const handleRunInference = async () => {
     setIsRunning(true);
-    setTimeout(() => {
-      const points = [];
-      const steps = horizonHours;
-      const baseOrbit = currentSatellite.currentOrbitResidual;
-      const baseClock = currentSatellite.currentClockResidual;
+    const startTime = performance.now();
 
-      for (let i = 0; i <= steps; i += 2) {
-        const t = i / steps;
-        const solarFactor = (solarKpIndex / 9) * 0.15;
-        const predictedOrbit = +(
-          baseOrbit +
-          Math.sin(t * Math.PI * 3) * 0.08 +
-          solarFactor * t +
-          (Math.random() - 0.5) * noiseLevel
-        ).toFixed(3);
+    try {
+      let fileToSend = customFile;
 
-        const predictedClock = +(
-          baseClock +
-          t * 0.04 +
-          (Math.random() - 0.5) * (noiseLevel * 0.4)
-        ).toFixed(3);
-
-        points.push({
-          hour: `+${i}h`,
-          orbitResidual: predictedOrbit,
-          orbitUpper: +(predictedOrbit + 0.06 + t * 0.08).toFixed(3),
-          orbitLower: +(predictedOrbit - 0.06 - t * 0.08).toFixed(3),
-          clockResidual: predictedClock,
-          confidence: Math.max(88, Math.round(99 - t * 6 - (solarKpIndex > 5 ? 4 : 0))),
-        });
+      // If user hasn't selected a custom CSV, fetch the real sample observation CSV from public
+      if (!fileToSend) {
+        const sampleRes = await fetch('/sample_navic_obs.csv');
+        const sampleBlob = await sampleRes.blob();
+        fileToSend = new File([sampleBlob], 'sample_navic_obs.csv', { type: 'text/csv' });
       }
 
-      setForecastResult({
-        satelliteId: currentSatellite.id,
-        model: modelType,
-        horizonHours,
-        rmsOrbitMeters: +(0.14 + (solarKpIndex / 9) * 0.06).toFixed(3),
-        rmsClockNs: +(0.08 + (solarKpIndex / 9) * 0.04).toFixed(3),
-        dataPoints: points,
-        generatedAt: new Date().toISOString(),
-      });
+      // Map satellite name to backend ID (e.g. NavIC-1A -> G01, NavIC-1C -> G03)
+      const satIdMap: Record<string, string> = {
+        'NavIC-1A': 'G01',
+        'NavIC-1B': 'G01',
+        'NavIC-1C': 'G03',
+        'NavIC-1D': 'G05',
+        'NavIC-1E': 'G05',
+        'NavIC-1F': 'G07',
+        'NavIC-1G': 'G07',
+        'NavIC-1H': 'G08',
+        'NavIC-1I': 'G08',
+      };
+      const backendSatId = satIdMap[currentSatellite.id] || 'G01';
+      const orbitType = currentSatellite.type === 'MEO' ? 'MEO' : 'GEO';
 
-      const now = new Date();
-      const timeStr = `${String(now.getUTCHours()).padStart(2, '0')}:${String(
-        now.getUTCMinutes()
-      ).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')} UTC`;
+      // Send to real FastAPI PyTorch backend
+      const res = await uploadSatelliteForecastCSV(backendSatId, fileToSend, orbitType);
+      const executionMs = Math.round(performance.now() - startTime);
 
-      onAddForecast({
-        id: `fc-${Date.now()}`,
-        timeUtc: timeStr,
-        satType: currentSatellite.type,
-        model: modelType,
-        rows: 14500,
-        status: 'Completed',
-        executionTimeMs: 420,
-        rmsErrorMeters: +(0.14 + (solarKpIndex / 9) * 0.06).toFixed(3),
-      });
+      if (res && res.forecast_points && res.forecast_points.length > 0) {
+        const points = res.forecast_points.map((pt: any) => ({
+          hour: pt.time_label,
+          orbitResidual: pt.orbit_residual_3d,
+          orbitUpper: pt.orbit_residual_ci_upper,
+          orbitLower: pt.orbit_residual_ci_lower,
+          clockResidual: pt.satclockerror,
+          confidence: Math.round(res.confidence_level_pct || 96),
+        }));
 
+        setForecastResult({
+          satelliteId: currentSatellite.id,
+          model: modelType,
+          horizonHours: res.prediction_horizon_hours || 24,
+          rmsOrbitMeters: res.current_orbit_residual_m,
+          rmsClockNs: res.current_clock_residual_ns,
+          dataPoints: points,
+          generatedAt: new Date().toISOString(),
+        });
+
+        const now = new Date();
+        const timeStr = `${String(now.getUTCHours()).padStart(2, '0')}:${String(
+          now.getUTCMinutes()
+        ).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')} UTC`;
+
+        onAddForecast({
+          id: `fc-${Date.now()}`,
+          timeUtc: timeStr,
+          satType: currentSatellite.type,
+          model: `Ephemeris ${orbitType}`,
+          rows: 96,
+          status: 'Completed',
+          executionTimeMs: executionMs,
+          rmsErrorMeters: res.current_orbit_residual_m,
+        });
+      }
+    } catch (err: any) {
+      console.warn('[Inference] Fallback error:', err);
+    } finally {
       setIsRunning(false);
-    }, 600);
+    }
   };
 
   return (
@@ -202,6 +216,32 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ satellites, onAddFor
                 <span>24H</span>
                 <span>48H</span>
               </div>
+            </div>
+
+            {/* Observation Dataset Source */}
+            <div className="space-y-1.5 font-mono text-xs">
+              <label className="text-[10px] uppercase tracking-wider text-white/50">OBSERVATION INPUT CSV</label>
+              <label className="flex items-center justify-between p-2.5 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/5 cursor-pointer transition-all">
+                <div className="flex items-center space-x-2 truncate">
+                  <Upload className="w-3.5 h-3.5 text-[#6FF2C0] shrink-0" />
+                  <span className="text-[11px] truncate text-white/80">
+                    {customFile ? customFile.name : 'Built-in 7-Day NavIC Observation'}
+                  </span>
+                </div>
+                <span className="text-[9px] px-2 py-0.5 rounded bg-white/10 text-white/60">
+                  {customFile ? 'Custom' : 'Default'}
+                </span>
+                <input
+                  type="file"
+                  accept=".csv,.txt"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setCustomFile(e.target.files[0]);
+                    }
+                  }}
+                />
+              </label>
             </div>
 
             {/* Solar Geomagnetic Index */}

@@ -7,6 +7,7 @@ interface HeaderProps {
   onSelectTab: (tab: DashboardTab) => void;
   onToggleSidebar?: () => void;
   onBackToLanding?: () => void;
+  isBackendConnected?: boolean;
   utcTime: Date;
   isSimulating: boolean;
   onToggleSimulation: () => void;
@@ -21,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectTab,
   onToggleSidebar,
   onBackToLanding,
+  isBackendConnected = false,
   utcTime,
   isSimulating,
   onToggleSimulation,
@@ -67,7 +69,14 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div
           className="flex items-center space-x-2.5 cursor-pointer"
-          onClick={() => onSelectTab('dashboard')}
+          onClick={() => {
+            if (onBackToLanding) {
+              onBackToLanding();
+            } else {
+              onSelectTab('dashboard');
+            }
+          }}
+          title={onBackToLanding ? 'Return to Main Website' : 'Mission Control'}
         >
           <span className="font-dancing text-white text-2xl font-semibold tracking-wide">
             Ephemeris
@@ -76,6 +85,31 @@ export const Header: React.FC<HeaderProps> = ({
             NavIC
           </span>
         </div>
+
+        {/* Live Backend Connection Indicator */}
+        <div
+          className={`hidden md:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono border ${
+            isBackendConnected
+              ? 'bg-emerald-950/50 text-[#6FF2C0] border-emerald-500/40'
+              : 'bg-white/5 text-white/50 border-white/10'
+          }`}
+        >
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${
+              isBackendConnected ? 'bg-emerald-400 shadow-[0_0_8px_#6FF2C0]' : 'bg-white/40'
+            }`}
+          />
+          <span>{isBackendConnected ? 'FASTAPI: ONLINE' : 'SIMULATION MODE'}</span>
+        </div>
+
+        {onBackToLanding && (
+          <button
+            onClick={onBackToLanding}
+            className="hidden sm:flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/15 text-xs font-mono transition-colors cursor-pointer"
+          >
+            <span>&larr; Overview</span>
+          </button>
+        )}
 
         {/* Primary Navigation Tabs */}
         <nav className="hidden lg:flex items-center space-x-1 border-l border-white/10 pl-6 font-mono text-xs">
@@ -98,40 +132,28 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
       </div>
 
-      {/* Right: Telemetry, Stream Control & Actions */}
-      <div className="flex items-center space-x-4 md:space-x-6 font-mono text-xs">
-        {/* Stream Toggle */}
-        <div className="flex items-center space-x-1.5 bg-black/40 border border-white/10 rounded-lg px-2 py-1">
-          <button
-            onClick={onToggleSimulation}
-            className={`flex items-center space-x-1.5 px-2 py-0.5 rounded transition-all cursor-pointer ${
-              isSimulating
-                ? 'bg-emerald-500/15 text-[#6FF2C0] font-bold'
-                : 'text-white/40 hover:text-white'
+      {/* Right: Telemetry & Actions */}
+      <div className="flex items-center space-x-3 sm:space-x-4">
+        {/* Stream Live / Paused Toggle */}
+        <button
+          onClick={onToggleSimulation}
+          className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border font-mono text-[10px] transition-all cursor-pointer ${
+            isSimulating
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-[#6FF2C0] font-bold'
+              : 'bg-white/5 border-white/10 text-white/50 hover:text-white'
+          }`}
+          title={isSimulating ? 'Click to Pause Feed' : 'Click to Resume Live Feed'}
+        >
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${
+              isSimulating ? 'bg-emerald-400 animate-pulse' : 'bg-white/40'
             }`}
-            title={isSimulating ? 'Pause feed' : 'Resume feed'}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-[10px]">{isSimulating ? 'LIVE' : 'PAUSED'}</span>
-          </button>
-          <div className="h-3 w-px bg-white/10" />
-          {[1, 2, 5].map((speed) => (
-            <button
-              key={speed}
-              onClick={() => onChangeSpeed(speed)}
-              className={`px-1.5 py-0.5 rounded text-[10px] cursor-pointer ${
-                simulationSpeed === speed
-                  ? 'bg-white/20 text-white font-bold'
-                  : 'text-white/40 hover:text-white'
-              }`}
-            >
-              {speed}x
-            </button>
-          ))}
-        </div>
+          />
+          <span>{isSimulating ? 'LIVE STREAM' : 'FEED PAUSED'}</span>
+        </button>
 
         {/* UTC Clock (Steady, clean) */}
-        <div className="hidden sm:flex items-center space-x-2 text-white/80 border-l border-white/10 pl-4">
+        <div className="hidden sm:flex items-center space-x-2 text-white/80 border-l border-white/10 pl-4 font-mono">
           <span className="text-white/40 text-[10px]">UTC</span>
           <span className="font-bold text-white text-[13px]">{timeString}</span>
         </div>

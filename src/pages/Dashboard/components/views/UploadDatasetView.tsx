@@ -95,11 +95,10 @@ export const UploadDatasetView: React.FC = () => {
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-3xl p-10 text-center transition-all liquid-glass ${
-          dragActive
+        className={`border-2 border-dashed rounded-3xl p-10 text-center transition-all liquid-glass ${dragActive
             ? 'border-[#6FF2C0] bg-emerald-950/30'
             : 'border-white/15 hover:border-white/30 bg-[#060408]/80'
-        }`}
+          }`}
       >
         <div className="max-w-md mx-auto space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-[#6FF2C0] shadow-2xl">

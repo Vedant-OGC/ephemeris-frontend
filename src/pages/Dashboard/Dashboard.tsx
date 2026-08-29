@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { MetricCards } from './components/MetricCards';
@@ -19,7 +19,19 @@ import { AlertsView } from './components/views/AlertsView';
 import { SettingsView } from './components/views/SettingsView';
 import { HealthView } from './components/views/HealthView';
 
-// Initial Mock Data
+// API Service Layer
+import {
+  getConstellation,
+  getAlerts,
+  markAlertAsRead,
+  getForecastHistory,
+  getSystemTelemetry,
+  getDashboardOverview,
+  getSatelliteForecast,
+  checkBackendHealth,
+} from './services/api';
+
+// Initial Mock Data Fallbacks
 import {
   INITIAL_SATELLITES,
   INITIAL_FORECASTS,
@@ -43,7 +55,7 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
   // Navigation
   const [activeTab, setActiveTab] = useState<DashboardTab>('dashboard');
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false); // Hide by default
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   // Core Data States
   const [satellites, setSatellites] = useState<Satellite[]>(INITIAL_SATELLITES);
@@ -51,6 +63,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
   const [forecasts, setForecasts] = useState<ForecastLog[]>(INITIAL_FORECASTS);
   const [alerts, setAlerts] = useState<AlertItem[]>(INITIAL_ALERTS);
   const [telemetry, setTelemetry] = useState<SystemTelemetry>(INITIAL_SYSTEM_TELEMETRY);
+  const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
 
   // Live UTC Clock & Simulation Controls
   const [utcTime, setUtcTime] = useState<Date>(new Date());
@@ -58,68 +71,102 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
   const [simulationSpeed, setSimulationSpeed] = useState<number>(1);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
+  // Fetch all initial data from FastAPI backend
+  const loadBackendData = useCallback(async () => {
+    try {
+      const isOnline = await checkBackendHealth();
+      setIsBackendConnected(isOnline);
+
+      // 1. Constellation
+      const sats = await getConstellation();
+      if (sats && sats.length > 0) {
+        setSatellites(sats);
+      }
+
+      // 2. Alerts
+      const liveAlerts = await getAlerts();
+      if (liveAlerts && liveAlerts.length > 0) {
+        setAlerts(liveAlerts);
+      }
+
+      // 3. Forecast History
+      const hist = await getForecastHistory();
+      if (hist && hist.length > 0) {
+        setForecasts(hist);
+      }
+
+      // 4. Telemetry & Overview
+      const telem = await getSystemTelemetry();
+      const overview = await getDashboardOverview();
+      if (telem) {
+        setTelemetry({
+          ...telem,
+          totalSatellites: overview?.total_satellites ?? telem.totalSatellites,
+          avgOrbitError: overview?.avg_orbit_error_m && overview.avg_orbit_error_m > 0 ? overview.avg_orbit_error_m : telem.avgOrbitError,
+          avgClockError: overview?.avg_clock_error_ns && overview.avg_clock_error_ns > 0 ? overview.avg_clock_error_ns : telem.avgClockError,
+        });
+      }
+    } catch (e) {
+      console.warn('[Dashboard] Using local dataset fallback:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadBackendData();
+    // Poll telemetry and health every 10 seconds
+    const interval = setInterval(loadBackendData, 10000);
+    return () => clearInterval(interval);
+  }, [loadBackendData]);
+
+  // When satellite selection changes, fetch its live forecast series if available
+  useEffect(() => {
+    let isMounted = true;
+    getSatelliteForecast(selectedSatelliteId).then((series) => {
+      if (isMounted && series && series.length > 0) {
+        setSatellites((prev) =>
+          prev.map((s) =>
+            s.id === selectedSatelliteId
+              ? { ...s, predictionSeries: series }
+              : s
+          )
+        );
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedSatelliteId]);
+
   // Active satellite record
   const selectedSatellite =
     satellites.find((s) => s.id === selectedSatelliteId) || satellites[0];
 
-  // Live real-time clock ticker & subtle telemetry simulation
+  // Real-time UTC clock ticker
   useEffect(() => {
     const interval = setInterval(() => {
       setUtcTime((prev) => new Date(prev.getTime() + 1000 * (isSimulating ? simulationSpeed : 0)));
-
-      if (isSimulating) {
-        setTelemetry((prev) => {
-          const jitterGpu = Math.min(65, Math.max(25, prev.gpuUsagePercent + (Math.random() > 0.5 ? 1 : -1)));
-          return {
-            ...prev,
-            uptimeSeconds: prev.uptimeSeconds + 1 * simulationSpeed,
-            gpuUsagePercent: jitterGpu,
-            avgOrbitError: +(0.14 + Math.sin(Date.now() / 10000) * 0.01).toFixed(2),
-            avgClockError: +(0.08 + Math.cos(Date.now() / 10000) * 0.005).toFixed(2),
-          };
-        });
-
-        setSatellites((prev) =>
-          prev.map((sat) => {
-            const jitter = (Math.random() - 0.5) * 0.004;
-            const updatedOrbit = Math.max(0.04, +(sat.currentOrbitResidual + jitter).toFixed(2));
-            return {
-              ...sat,
-              currentOrbitResidual: updatedOrbit,
-            };
-          })
-        );
-      }
     }, 1000);
 
     return () => clearInterval(interval);
   }, [isSimulating, simulationSpeed]);
 
-  const handleRefreshData = () => {
+  const handleRefreshData = async () => {
     setIsRefreshing(true);
+    await loadBackendData();
     setTimeout(() => {
-      const now = new Date();
-      const timeStr = `${String(now.getUTCHours()).padStart(2, '0')}:${String(
-        now.getUTCMinutes()
-      ).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')} UTC`;
-
-      setTelemetry((prev) => ({
-        ...prev,
-        lastUpdatedUtc: timeStr,
-        gpuUsagePercent: 38,
-      }));
       setIsRefreshing(false);
-    }, 600);
+    }, 500);
   };
 
   const handleAddForecast = (newForecast: ForecastLog) => {
     setForecasts((prev) => [newForecast, ...prev]);
   };
 
-  const handleAcknowledgeAlert = (id: string) => {
+  const handleAcknowledgeAlert = async (id: string) => {
     setAlerts((prev) =>
       prev.map((a) => (a.id === id ? { ...a, read: true } : a))
     );
+    await markAlertAsRead(id);
   };
 
   const handleClearAllAlerts = () => {
@@ -149,6 +196,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
         onSelectTab={(tab) => setActiveTab(tab)}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         onBackToLanding={onBackToLanding}
+        isBackendConnected={isBackendConnected}
         utcTime={utcTime}
         isSimulating={isSimulating}
         onToggleSimulation={() => setIsSimulating(!isSimulating)}
@@ -308,4 +356,3 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
 };
 
 export default Dashboard;
-
