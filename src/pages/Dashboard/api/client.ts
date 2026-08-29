@@ -257,3 +257,37 @@ export async function runForecastJson(
   }
   return res.json();
 }
+
+// --- Server-side Forecast (no file upload) ---
+
+/**
+ * Run forecast using server-stored 7-day data for a satellite.
+ * No file upload required — backend loads the CSV from its data store.
+ */
+export function runSatelliteForecast(
+  satId: string,
+  orbitType?: string,
+): Promise<SatelliteForecastSummary> {
+  const qs = orbitType ? `?orbit_type=${orbitType}` : '';
+  return request<SatelliteForecastSummary>(
+    `/api/satellites/${satId}/forecast${qs}`,
+    { method: 'POST' },
+  );
+}
+
+// --- Raw 7-day History Data ---
+
+export interface SatelliteRawHistoryResponse {
+  satellite_id: string;
+  epochs: number;
+  columns: string[];
+  data: Record<string, any>[];
+}
+
+export function fetchSatelliteRawHistory(
+  satId: string,
+): Promise<SatelliteRawHistoryResponse> {
+  return request<SatelliteRawHistoryResponse>(
+    `/api/satellites/${satId}/history/raw`,
+  );
+}

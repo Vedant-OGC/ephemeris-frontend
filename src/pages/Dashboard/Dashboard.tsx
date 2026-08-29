@@ -44,6 +44,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
     forecasts,
     dashboardOverview,
     orbitResiduals,
+    satelliteForecasts,
     isLoading,
     utcTime,
     isSimulating,
@@ -118,6 +119,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
                       satellite={selectedSatellite}
                       allSatellites={satellites}
                       onSelectSatellite={(id) => setSelectedSatelliteId(id)}
+                      forecastData={satelliteForecasts[selectedSatelliteId] || null}
                     />
                   )}
                 </div>
@@ -157,6 +159,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBackToLanding }) => {
             <div className="max-w-[1600px] mx-auto">
               <ForecastView
                 satellites={satellites}
+                selectedSatelliteId={selectedSatelliteId}
+                onSelectSatellite={(id) => setSelectedSatelliteId(id)}
                 onAddForecast={addForecast}
               />
             </div>

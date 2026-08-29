@@ -6,10 +6,12 @@ import {
   fetchForecastHistory,
   fetchDashboardOverview,
   fetchOrbitResiduals,
+  fetchSatelliteForecast,
   markAlertRead,
   uploadSatelliteForecast,
   type DashboardOverviewResponse,
   type MultiSatelliteResidualsResponse,
+  type SatelliteForecastSummary,
 } from '../api/client';
 import {
   mapConstellation,
@@ -47,6 +49,7 @@ export function useDashboardData() {
   const [forecasts, setForecasts] = useState<ForecastLog[]>([]);
   const [dashboardOverview, setDashboardOverview] = useState<DashboardOverviewResponse | null>(null);
   const [orbitResiduals, setOrbitResiduals] = useState<MultiSatelliteResidualsResponse | null>(null);
+  const [satelliteForecasts, setSatelliteForecasts] = useState<Record<string, SatelliteForecastSummary>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [utcTime, setUtcTime] = useState<Date>(new Date());
@@ -241,8 +244,17 @@ export function useDashboardData() {
   }, []);
 
   const handleRunInference = useCallback(
-    async (satId: string, file: File, orbitType: string) => {
-      const result = await uploadSatelliteForecast(satId, file, orbitType);
+    async (satId: string, file?: File, orbitType?: string) => {
+      let result: SatelliteForecastSummary;
+      if (file) {
+        // Admin upload path
+        result = await uploadSatelliteForecast(satId, file, orbitType);
+      } else {
+        // Server-side path (uses stored data)
+        result = await fetchSatelliteForecast(satId);
+      }
+      // Store forecast for this satellite
+      setSatelliteForecasts((prev) => ({ ...prev, [satId]: result }));
       // Refresh constellation after inference
       try {
         const constellationRes = await fetchConstellation();
@@ -286,5 +298,6 @@ export function useDashboardData() {
     selectAlert: handleSelectAlert,
     updateHealth: handleUpdateHealth,
     runInference: handleRunInference,
+    satelliteForecasts,
   };
 }

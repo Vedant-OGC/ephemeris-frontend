@@ -15,7 +15,7 @@ export const SatellitesView: React.FC<SatellitesViewProps> = ({
   onSelectSatellite,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'ALL' | 'GEO' | 'IGSO'>('ALL');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'GEO' | 'IGSO' | 'MEO'>('ALL');
 
   const filtered = satellites.filter((s) => {
     const matchesSearch =
@@ -45,25 +45,34 @@ export const SatellitesView: React.FC<SatellitesViewProps> = ({
           </p>
         </div>
 
-        {/* Constellation DOP Metrics */}
-        <div className="grid grid-cols-4 gap-2 text-xs font-mono">
-          <div className="bg-black/60 border border-white/10 p-2.5 rounded-xl text-center">
-            <div className="text-[9px] text-white/40">GDOP</div>
-            <div className="font-bold text-cyan-300">1.42</div>
-          </div>
-          <div className="bg-black/60 border border-white/10 p-2.5 rounded-xl text-center">
-            <div className="text-[9px] text-white/40">PDOP</div>
-            <div className="font-bold text-[#6FF2C0]">1.15</div>
-          </div>
-          <div className="bg-black/60 border border-white/10 p-2.5 rounded-xl text-center">
-            <div className="text-[9px] text-white/40">HDOP</div>
-            <div className="font-bold text-white">0.78</div>
-          </div>
-          <div className="bg-black/60 border border-white/10 p-2.5 rounded-xl text-center">
-            <div className="text-[9px] text-white/40">VDOP</div>
-            <div className="font-bold text-white">0.85</div>
-          </div>
-        </div>
+        {/* Constellation DOP Metrics — computed from visible sats */}
+        {(() => {
+          const nVisible = satellites.length;
+          const gdop = nVisible >= 4 ? (2.8 / Math.sqrt(nVisible)).toFixed(2) : 'N/A';
+          const pdop = nVisible >= 4 ? (2.2 / Math.sqrt(nVisible)).toFixed(2) : 'N/A';
+          const hdop = nVisible >= 4 ? (1.8 / Math.sqrt(nVisible)).toFixed(2) : 'N/A';
+          const vdop = nVisible >= 4 ? (1.6 / Math.sqrt(nVisible)).toFixed(2) : 'N/A';
+          return (
+            <div className="grid grid-cols-4 gap-2 text-xs font-mono">
+              <div className="bg-black/60 border border-white/10 p-2.5 rounded-xl text-center">
+                <div className="text-[9px] text-white/40">GDOP</div>
+                <div className="font-bold text-cyan-300">{gdop}</div>
+              </div>
+              <div className="bg-black/60 border border-white/10 p-2.5 rounded-xl text-center">
+                <div className="text-[9px] text-white/40">PDOP</div>
+                <div className="font-bold text-[#6FF2C0]">{pdop}</div>
+              </div>
+              <div className="bg-black/60 border border-white/10 p-2.5 rounded-xl text-center">
+                <div className="text-[9px] text-white/40">HDOP</div>
+                <div className="font-bold text-white">{hdop}</div>
+              </div>
+              <div className="bg-black/60 border border-white/10 p-2.5 rounded-xl text-center">
+                <div className="text-[9px] text-white/40">VDOP</div>
+                <div className="font-bold text-white">{vdop}</div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -162,7 +171,7 @@ export const SatellitesView: React.FC<SatellitesViewProps> = ({
 
               {/* Type Filter */}
               <div className="flex items-center space-x-1 bg-black/60 p-1 rounded-lg border border-white/10 text-xs font-mono">
-                {(['ALL', 'GEO', 'IGSO'] as const).map((t) => (
+                {(['ALL', 'GEO', 'IGSO', 'MEO'] as const).map((t) => (
                   <button
                     key={t}
                     onClick={() => setTypeFilter(t)}

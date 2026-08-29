@@ -8,7 +8,7 @@ interface HistoryViewProps {
 
 export const HistoryView: React.FC<HistoryViewProps> = ({ forecasts }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState<'ALL' | 'GEO' | 'IGSO'>('ALL');
+  const [selectedType, setSelectedType] = useState<'ALL' | 'GEO' | 'IGSO' | 'MEO'>('ALL');
 
   const filtered = forecasts.filter((f) => {
     const matchesSearch =
@@ -82,7 +82,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ forecasts }) => {
           </div>
 
           <div className="flex items-center space-x-1 bg-black/60 p-1 rounded-lg border border-white/10 text-xs font-mono">
-            {(['ALL', 'GEO', 'IGSO'] as const).map((t) => (
+            {(['ALL', 'GEO', 'IGSO', 'MEO'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setSelectedType(t)}

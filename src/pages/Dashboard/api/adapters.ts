@@ -21,12 +21,6 @@ const SATELLITE_COLORS: Record<string, string> = {
   G12: '#6FF2C0',
 };
 
-// Orbit type mapping: backend uses 'MEO' where frontend uses 'IGSO' for some NavIC sats
-const ORBIT_TYPE_MAP: Record<string, string> = {
-  MEO: 'IGSO',
-  GEO: 'GEO',
-  IGSO: 'IGSO',
-};
 
 // Satellite CSS overlay positions over the Earth video (layout constants)
 const SATELLITE_POSITIONS: Record<string, { x: number; y: number; orbitLabel: string }> = {
@@ -43,7 +37,7 @@ const SATELLITE_POSITIONS: Record<string, { x: number; y: number; orbitLabel: st
 export function mapSatelliteState(sat: SatelliteState): Satellite {
   const color = SATELLITE_COLORS[sat.id] || '#6FF2C0';
   const pos = SATELLITE_POSITIONS[sat.id];
-  const frontendType = (ORBIT_TYPE_MAP[sat.type] || sat.type) as 'GEO' | 'IGSO' | 'MEO' | 'LEO';
+  const frontendType = sat.type as 'GEO' | 'IGSO' | 'MEO' | 'LEO';
 
   return {
     id: sat.id,

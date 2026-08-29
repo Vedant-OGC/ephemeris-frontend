@@ -1,5 +1,6 @@
 import React from 'react';
 import { Satellite } from '../types';
+import { SatelliteForecastSummary } from '../api/client';
 import {
   ResponsiveContainer,
   XAxis,
@@ -16,12 +17,14 @@ interface SatelliteInspectorProps {
   satellite: Satellite;
   allSatellites: Satellite[];
   onSelectSatellite: (id: string) => void;
+  forecastData?: SatelliteForecastSummary | null;
 }
 
 export const SatelliteInspector: React.FC<SatelliteInspectorProps> = ({
   satellite,
   allSatellites,
   onSelectSatellite,
+  forecastData,
 }) => {
   const currentIndex = allSatellites.findIndex((s) => s.id === satellite.id);
   const handlePrev = () => {
@@ -33,14 +36,16 @@ export const SatelliteInspector: React.FC<SatelliteInspectorProps> = ({
     onSelectSatellite(allSatellites[nextIndex].id);
   };
 
-  const chartData = satellite.predictionSeries?.length
-    ? satellite.predictionSeries
+  // Use real forecast data if available, otherwise show current residuals only
+  const hasRealForecast = forecastData && forecastData.forecast_points && forecastData.forecast_points.length > 0;
+  const chartData = hasRealForecast
+    ? forecastData.forecast_points.map((p: any) => ({
+        timeOffset: p.time_label,
+        orbitResidual: p.orbit_residual_3d,
+        clockResidual: p.satclockerror,
+      }))
     : [
         { timeOffset: 'Now', orbitResidual: satellite.currentOrbitResidual, clockResidual: satellite.currentClockResidual },
-        { timeOffset: '+6h', orbitResidual: +(satellite.currentOrbitResidual * 1.15).toFixed(2), clockResidual: +(satellite.currentClockResidual * 1.05).toFixed(2) },
-        { timeOffset: '+12h', orbitResidual: +(satellite.currentOrbitResidual * 1.08).toFixed(2), clockResidual: +(satellite.currentClockResidual * 1.12).toFixed(2) },
-        { timeOffset: '+18h', orbitResidual: +(satellite.currentOrbitResidual * 1.25).toFixed(2), clockResidual: +(satellite.currentClockResidual * 1.18).toFixed(2) },
-        { timeOffset: '+24h', orbitResidual: +(satellite.currentOrbitResidual * 1.18).toFixed(2), clockResidual: +(satellite.currentClockResidual * 1.10).toFixed(2) },
       ];
 
   return (
@@ -118,6 +123,11 @@ export const SatelliteInspector: React.FC<SatelliteInspectorProps> = ({
 
       {/* 4. Forecast Propagation Recharts Horizon */}
       <div className="flex-1 flex flex-col justify-end">
+        {!hasRealForecast && (
+          <div className="text-center text-[10px] font-mono text-white/30 mb-2">
+            No forecast data — run inference to see propagation
+          </div>
+        )}
         <div className="flex items-center justify-between text-[10px] font-mono text-white/40 mb-1.5">
           <span>24H INFERENCE PROPAGATION</span>
           <span className="text-[#6FF2C0]">EPHEMERIS TIMeR-XL</span>

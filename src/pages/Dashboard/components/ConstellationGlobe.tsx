@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Satellite, SatelliteHealth } from '../types';
-import { Target, Play, Pause, Compass, Radio, Layers, Orbit, Sparkles } from 'lucide-react';
+import { Satellite } from '../types';
+import { Play, Pause } from 'lucide-react';
 
 interface ConstellationGlobeProps {
   satellites: Satellite[];
@@ -23,9 +23,7 @@ export const ConstellationGlobe: React.FC<ConstellationGlobeProps> = ({
 
   const filteredSatellites = satellites.filter((s) => {
     if (filterType === 'ALL') return true;
-    if (filterType === 'GEO') return s.type === 'GEO';
-    if (filterType === 'IGSO') return s.type === 'IGSO';
-    return true;
+    return s.type === filterType;
   });
 
   const toggleVideoPlay = () => {
@@ -40,23 +38,21 @@ export const ConstellationGlobe: React.FC<ConstellationGlobeProps> = ({
     }
   };
 
-  // Satellite node orbital positions plotted aesthetically over the video horizon
+  // Satellite positions keyed by BACKEND ID (G01, G03, etc.)
   const satPositions: Record<string, { x: number; y: number; orbit: string }> = {
-    'NavIC-1A': { x: 28, y: 35, orbit: 'GEO 55°E' },
-    'NavIC-1B': { x: 38, y: 22, orbit: 'GSO 55°E' },
-    'NavIC-1C': { x: 52, y: 40, orbit: 'GEO 83°E' },
-    'NavIC-1D': { x: 68, y: 25, orbit: 'GSO 111.75°E' },
-    'NavIC-1E': { x: 74, y: 48, orbit: 'GSO 111.75°E' },
-    'NavIC-1F': { x: 20, y: 55, orbit: 'GEO 32.5°E' },
-    'NavIC-1G': { x: 82, y: 62, orbit: 'GEO 129.5°E' },
-    'NavIC-1I': { x: 42, y: 68, orbit: 'GSO 55°E' },
+    'G01': { x: 28, y: 35, orbit: 'GEO 55E' },
+    'G03': { x: 52, y: 40, orbit: 'GEO 83E' },
+    'G05': { x: 74, y: 48, orbit: 'GSO 111.75E' },
+    'G07': { x: 82, y: 62, orbit: 'GEO 129.5E' },
+    'G08': { x: 20, y: 55, orbit: 'GEO 32.5E' },
+    'G10': { x: 38, y: 22, orbit: 'MEO' },
+    'G11': { x: 42, y: 68, orbit: 'MEO' },
+    'G12': { x: 68, y: 25, orbit: 'GEO 55E' },
   };
 
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.play().catch(() => {
-        // Handle potential autoplay restrictions
-      });
+      videoRef.current.play().catch(() => {});
     }
   }, []);
 
@@ -75,10 +71,8 @@ export const ConstellationGlobe: React.FC<ConstellationGlobeProps> = ({
           <source src="/fisp-earth.webm" type="video/webm" />
           <source src="/earthvideo.mp4" type="video/mp4" />
         </video>
-        {/* Sleek Obsidian Vignette & Radial Contrast Overlay */}
-        <div className="absolute inset-0 bg-radial-gradient from-transparent via-[#040306]/40 to-[#040306]/90" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#040306] via-transparent to-[#040306]/70" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#040306]/80 via-transparent to-[#040306]/80" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#040306] via-[#040306]/30 to-[#040306]/70" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#040306]/60 via-transparent to-[#040306]/60" />
       </div>
 
       {/* 2. Top Header Overlay */}
@@ -91,13 +85,13 @@ export const ConstellationGlobe: React.FC<ConstellationGlobeProps> = ({
             </h2>
           </div>
           <p className="text-xs text-white/60 font-inter mt-0.5">
-            Real-Time Earth Video Tracking &bull; 8 Regional Transponders [3 GEO + 5 GSO]
+            Real-Time Earth Video Tracking &bull; {satellites.length} Regional Transponders
           </p>
         </div>
 
         {/* Orbit Filter Chips */}
         <div className="pointer-events-auto flex items-center space-x-1.5 liquid-glass bg-black/70 p-1.5 rounded-xl border border-white/20 text-xs font-mono">
-          {['ALL', 'GEO', 'IGSO'].map((mode) => (
+          {['ALL', 'GEO', 'IGSO', 'MEO'].map((mode) => (
             <button
               key={mode}
               onClick={() => setFilterType(mode)}
@@ -113,10 +107,11 @@ export const ConstellationGlobe: React.FC<ConstellationGlobeProps> = ({
         </div>
       </div>
 
-      {/* 3. Interactive Satellite Markers plotted across the Earth view */}
+      {/* 3. Interactive Satellite Markers */}
       <div className="relative z-10 flex-1 w-full h-full pointer-events-none">
         {filteredSatellites.map((sat) => {
-          const pos = satPositions[sat.id] || { x: 50, y: 50, orbit: 'GEO' };
+          const pos = satPositions[sat.id];
+          if (!pos) return null;
           const isSelected = sat.id === selectedSatelliteId;
 
           return (
@@ -154,7 +149,6 @@ export const ConstellationGlobe: React.FC<ConstellationGlobeProps> = ({
 
       {/* 4. Bottom Controls & Telemetry Overlay */}
       <div className="relative z-10 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pointer-events-none">
-        {/* Left: Video Playback & Satellite Switcher Controls */}
         <div className="pointer-events-auto flex items-center space-x-2">
           <div className="liquid-glass bg-black/80 border border-white/20 rounded-xl p-1.5 flex items-center space-x-1.5 shadow-2xl">
             <button
@@ -171,22 +165,23 @@ export const ConstellationGlobe: React.FC<ConstellationGlobeProps> = ({
           </div>
         </div>
 
-        {/* Right: Selected Target Quick Readout */}
-        <div className="pointer-events-auto liquid-glass bg-black/85 border border-white/20 rounded-xl px-4 py-2 text-xs font-mono shadow-2xl flex items-center space-x-3">
-          <div className="flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="text-white/50 text-[10px]">TARGET:</span>
-            <span className="font-bold text-[#6FF2C0]">{selectedSat.id}</span>
+        {selectedSat && (
+          <div className="pointer-events-auto liquid-glass bg-black/85 border border-white/20 rounded-xl px-4 py-2 text-xs font-mono shadow-2xl flex items-center space-x-3">
+            <div className="flex items-center space-x-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-white/50 text-[10px]">TARGET:</span>
+              <span className="font-bold text-[#6FF2C0]">{selectedSat.id}</span>
+            </div>
+            <span className="text-white/20">|</span>
+            <div className="text-white/70 text-[11px]">
+              ALT: <span className="text-white font-bold">{selectedSat.altitudeKm.toLocaleString()} km</span>
+            </div>
+            <span className="text-white/20">|</span>
+            <div className="text-[#38BDF8] text-[11px]">
+              RESIDUAL: <span className="font-bold">{selectedSat.currentOrbitResidual} m</span>
+            </div>
           </div>
-          <span className="text-white/20">|</span>
-          <div className="text-white/70 text-[11px]">
-            ALT: <span className="text-white font-bold">{selectedSat.altitudeKm.toLocaleString()} km</span>
-          </div>
-          <span className="text-white/20">|</span>
-          <div className="text-[#38BDF8] text-[11px]">
-            RESIDUAL: <span className="font-bold">{selectedSat.currentOrbitResidual} m</span>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
