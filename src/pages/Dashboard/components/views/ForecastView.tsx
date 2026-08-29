@@ -33,6 +33,7 @@ export const ForecastView: React.FC<ForecastViewProps> = ({
   // Admin upload fallback state
   const [showUpload, setShowUpload] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [viewingResult, setViewingResult] = useState<any | null>(null);
 
   const currentSatellite = satellites.find((s) => s.id === selectedSatelliteId) || satellites[0];
 
@@ -286,15 +287,57 @@ export const ForecastView: React.FC<ForecastViewProps> = ({
             )}
 
             {forecastResult && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-black/50 border border-white/5 font-mono text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-black/50 border border-white/5 font-mono text-xs">
                 <div><div className="text-[10px] text-white/40 uppercase">RADIAL RMSE</div><div className="text-[#6FF2C0] font-bold text-sm mt-0.5">{forecastResult.rmsOrbitMeters} m</div></div>
                 <div><div className="text-[10px] text-white/40 uppercase">CLOCK BIAS RMSE</div><div className="text-[#38BDF8] font-bold text-sm mt-0.5">{forecastResult.rmsClockNs} ns</div></div>
                 <div><div className="text-[10px] text-white/40 uppercase">CONFIDENCE</div><div className="text-emerald-400 font-bold text-sm mt-0.5">{forecastResult.confidence}%</div></div>
+                <div className="flex items-end">
+                  <button onClick={() => setViewingResult(viewingResult ? null : forecastResult)}
+                    className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[#38BDF8] border border-white/10 text-[10px] font-mono cursor-pointer transition-all">
+                    {viewingResult ? 'HIDE DATA' : 'VIEW DATA'}
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Inline Forecast Data Viewer */}
+      {viewingResult && (
+        <div className="liquid-glass bg-[#060408]/95 border border-white/10 rounded-2xl p-6 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div>
+              <span className="text-[10px] font-mono text-emerald-400 tracking-widest uppercase">FORECAST DATA</span>
+              <h3 className="font-instrument text-xl text-white mt-0.5">{viewingResult.satelliteId} — {viewingResult.dataPoints?.length || 0} points</h3>
+            </div>
+            <button onClick={() => setViewingResult(null)}
+              className="px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 text-white/60 border border-white/10 text-xs font-mono cursor-pointer">
+              CLOSE
+            </button>
+          </div>
+          <div className="overflow-x-auto max-h-80 overflow-y-auto">
+            <table className="w-full text-left text-[10px] font-mono">
+              <thead className="text-[9px] text-white/40 uppercase border-b border-white/10 sticky top-0 bg-[#060408]">
+                <tr>
+                  <th className="pb-2 pr-4">TIME</th>
+                  <th className="pb-2 pr-4">ORBIT 3D (m)</th>
+                  <th className="pb-2">CLOCK (ns)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {viewingResult.dataPoints?.map((pt: any, i: number) => (
+                  <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="py-1.5 pr-4 text-white/80 font-semibold">{pt.hour}</td>
+                    <td className="py-1.5 pr-4 text-[#6FF2C0]">{pt.orbitResidual?.toFixed(4)}</td>
+                    <td className="py-1.5 text-[#38BDF8]">{pt.clockResidual?.toFixed(4)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

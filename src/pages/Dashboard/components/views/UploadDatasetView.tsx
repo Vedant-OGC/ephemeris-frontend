@@ -19,6 +19,7 @@ export const UploadDatasetView: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [viewingResult, setViewingResult] = useState<any | null>(null);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -183,10 +184,18 @@ export const UploadDatasetView: React.FC = () => {
                     </td>
                     <td className="py-2.5 text-right">
                       {file.status === 'Completed' && file.result && (
-                        <button onClick={() => downloadForecast(file.result)}
-                          className="text-[#6FF2C0] hover:text-white transition-colors cursor-pointer" title="Download forecast CSV">
-                          <Download className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => setViewingResult(file.result)}
+                            className="text-[#38BDF8] hover:text-white transition-colors cursor-pointer text-[10px] font-mono px-2 py-0.5 rounded border border-white/10 hover:border-[#38BDF8]/40"
+                            title="View forecast data inline">
+                            VIEW
+                          </button>
+                          <button onClick={() => downloadForecast(file.result)}
+                            className="text-[#6FF2C0] hover:text-white transition-colors cursor-pointer"
+                            title="Download forecast CSV">
+                            <Download className="w-4 h-4" />
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -196,6 +205,84 @@ export const UploadDatasetView: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+    
+      {/* Inline CSV Data Viewer */}
+      {viewingResult && (
+        <div className="liquid-glass bg-[#060408]/95 border border-white/10 rounded-2xl p-6 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div>
+              <span className="text-[10px] font-mono text-emerald-400 tracking-widest uppercase">
+                FORECAST DATA PREVIEW
+              </span>
+              <h3 className="font-instrument text-2xl text-white mt-0.5">
+                {viewingResult.satellite_id} — {viewingResult.forecast_points?.length || 0} forecast points
+              </h3>
+            </div>
+            <button
+              onClick={() => setViewingResult(null)}
+              className="px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 text-white/60 border border-white/10 text-xs font-mono cursor-pointer"
+            >
+              CLOSE PREVIEW
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 mb-4 font-mono text-xs">
+            <div className="p-3 rounded-xl bg-black/40 border border-white/5">
+              <div className="text-[10px] text-white/40 uppercase">ORBIT RMSE</div>
+              <div className="text-[#6FF2C0] font-bold text-sm mt-0.5">{viewingResult.current_orbit_residual_m} m</div>
+            </div>
+            <div className="p-3 rounded-xl bg-black/40 border border-white/5">
+              <div className="text-[10px] text-white/40 uppercase">CLOCK RMSE</div>
+              <div className="text-[#38BDF8] font-bold text-sm mt-0.5">{viewingResult.current_clock_residual_ns} ns</div>
+            </div>
+            <div className="p-3 rounded-xl bg-black/40 border border-white/5">
+              <div className="text-[10px] text-white/40 uppercase">CONFIDENCE</div>
+              <div className="text-emerald-400 font-bold text-sm mt-0.5">{viewingResult.confidence_level_pct}%</div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <table className="w-full text-left text-[10px] font-mono">
+              <thead className="text-[9px] text-white/40 uppercase border-b border-white/10 sticky top-0 bg-[#060408]">
+                <tr>
+                  <th className="pb-2 pr-4">TIME</th>
+                  <th className="pb-2 pr-4">ORBIT 3D (m)</th>
+                  <th className="pb-2 pr-4">CLOCK (ns)</th>
+                  <th className="pb-2 pr-4">X ERR</th>
+                  <th className="pb-2 pr-4">Y ERR</th>
+                  <th className="pb-2 pr-4">Z ERR</th>
+                  <th className="pb-2 pr-4">ORBIT CI LOW</th>
+                  <th className="pb-2">ORBIT CI HIGH</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {viewingResult.forecast_points?.map((pt: any, i: number) => (
+                  <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="py-1.5 pr-4 text-white/80 font-semibold">{pt.time_label}</td>
+                    <td className="py-1.5 pr-4 text-[#6FF2C0]">{pt.orbit_residual_3d?.toFixed(4)}</td>
+                    <td className="py-1.5 pr-4 text-[#38BDF8]">{pt.satclockerror?.toFixed(4)}</td>
+                    <td className="py-1.5 pr-4 text-white/60">{pt.x_error?.toFixed(4)}</td>
+                    <td className="py-1.5 pr-4 text-white/60">{pt.y_error?.toFixed(4)}</td>
+                    <td className="py-1.5 pr-4 text-white/60">{pt.z_error?.toFixed(4)}</td>
+                    <td className="py-1.5 pr-4 text-white/40">{pt.orbit_residual_ci_lower?.toFixed(4)}</td>
+                    <td className="py-1.5 text-white/40">{pt.orbit_residual_ci_upper?.toFixed(4)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex justify-end pt-2 border-t border-white/10">
+            <button
+              onClick={() => downloadForecast(viewingResult)}
+              className="px-4 py-2 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-[#6FF2C0] border border-emerald-500/40 text-xs font-mono font-semibold transition-all cursor-pointer flex items-center space-x-2"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>DOWNLOAD CSV</span>
+            </button>
+          </div>
+        </div>
+      )}
+</div>
   );
 };

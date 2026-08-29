@@ -46,7 +46,14 @@ export function useDashboardData() {
   const [selectedSatelliteId, setSelectedSatelliteId] = useState<string>('');
   const [telemetry, setTelemetry] = useState<SystemTelemetry>(EMPTY_TELEMETRY);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
-  const [forecasts, setForecasts] = useState<ForecastLog[]>([]);
+  const [forecasts, setForecasts] = useState<ForecastLog[]>(() => {
+    try {
+      const stored = localStorage.getItem('ephemeris_forecasts');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   const [dashboardOverview, setDashboardOverview] = useState<DashboardOverviewResponse | null>(null);
   const [orbitResiduals, setOrbitResiduals] = useState<MultiSatelliteResidualsResponse | null>(null);
   const [satelliteForecasts, setSatelliteForecasts] = useState<Record<string, SatelliteForecastSummary>>({});
@@ -212,7 +219,13 @@ export function useDashboardData() {
   }, []);
 
   const handleAddForecast = useCallback((newForecast: ForecastLog) => {
-    setForecasts((prev) => [newForecast, ...prev]);
+    setForecasts((prev) => {
+      const updated = [newForecast, ...prev];
+      try {
+        localStorage.setItem('ephemeris_forecasts', JSON.stringify(updated.slice(0, 100)));
+      } catch { /* ignore quota errors */ }
+      return updated;
+    });
   }, []);
 
   const handleAcknowledgeAlert = useCallback(async (id: string) => {
@@ -227,6 +240,22 @@ export function useDashboardData() {
   const handleClearAllAlerts = useCallback(() => {
     setAlerts((prev) => prev.map((a) => ({ ...a, read: true })));
   }, []);
+
+  // Also persist the initial history from backend
+  useEffect(() => {
+    if (forecasts.length === 0) {
+      // History will be loaded from backend on initial fetch
+    }
+  }, []);
+
+  // Sync forecasts to localStorage when they change from backend
+  useEffect(() => {
+    if (forecasts.length > 0) {
+      try {
+        localStorage.setItem('ephemeris_forecasts', JSON.stringify(forecasts.slice(0, 100)));
+      } catch { /* ignore quota errors */ }
+    }
+  }, [forecasts]);
 
   const handleSelectAlert = useCallback(
     (alert: AlertItem) => {
